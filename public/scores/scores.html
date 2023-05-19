@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Score</title>
+    <style>
+      .containerScore {
+        width: 80%;
+        margin: 0 auto;
+        background-color: antiquewhite;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: center;
+      }
+
+      th {
+        font-weight: bold;
+      }
+
+      input[type="number"] {
+        width: 80px;
+        padding: 4px;
+        text-align: center;
+      }
+
+      td:not(:first-child) {
+        border-left: none;
+      }
+
+      th:not(:first-child) {
+        border-left: none;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: blue;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        margin: 5px;
+      }
+
+      #total {
+        background-color: blue;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="containerScore">
+      <table>
+        <tbody>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col" id="player1"></th>
+            <th scope="col" id="player2"></th>
+            <th scope="col" id="player3"></th>
+            <th scope="col" id="player4"></th>
+          </tr>
+          <tr id="total">
+            <th scope="row">Total</th>
+            <td id="score1"></td>
+            <td id="score2"></td>
+            <td id="score3"></td>
+            <td id="score4"></td>
+          </tr>
+          <tr>
+            <th scope="row">round</th>
+            <td id="round1-score1">
+              <input
+                type="number"
+                onchange="updateScore('round1', 'player1', this.value)"
+              />
+            </td>
+            <td id="round1-score2">
+              <input
+                type="number"
+                onchange="updateScore('round1', 'player2', this.value)"
+              />
+            </td>
+            <td id="round1-score3">
+              <input
+                type="number"
+                onchange="updateScore('round1', 'player3', this.value)"
+              />
+            </td>
+            <td id="round1-score4">
+              <input
+                type="number"
+                onchange="updateScore('round1', 'player4', this.value)"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button id="addBtn">Add round</button>
+    </div>
+
+    <script>
+      let currentRound = 1;
+
+      function addRound() {
+        const tableBody = document.querySelector("tbody");
+
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+          <th scope="row">round${currentRound}</th>
+          <td id="round${currentRound}-score1">
+            <input
+              type="number"
+              onchange="updateScore('round${currentRound}', 'player1', this.value)"
+            />
+          </td>
+          <td id="round${currentRound}-score2">
+            <input
+              type="number"
+              onchange="updateScore('round${currentRound}', 'player2', this.value)"
+            />
+          </td>
+          <td id="round${currentRound}-score3">
+            <input
+              type="number"
+              onchange="updateScore('round${currentRound}', 'player3', this.value)"
+            />
+          </td>
+          <td id="round${currentRound}-score4">
+            <input
+              type="number"
+              onchange="updateScore('round${currentRound}', 'player4', this.value)"
+            />
+          </td>
+        `;
+
+        tableBody.insertBefore(newRow, tableBody.lastElementChild);
+
+        currentRound++;
+      }
+
+      function fetchPlayerData() {
+        fetch("http://localhost:3000/api/v1/players")
+          .then((response) => response.json())
+          .then((players) => {
+            const playerData = players[players.length - 1];
+            console.log(playerData);
+            document.getElementById("player1").textContent = playerData.player1;
+            document.getElementById("player2").textContent = playerData.player2;
+            document.getElementById("player3").textContent = playerData.player3;
+            document.getElementById("player4").textContent = playerData.player4;
+            document.getElementById("score1").textContent =
+              playerData.score.player1;
+            document.getElementById("score2").textContent =
+              playerData.score.player2;
+            document.getElementById("score3").textContent =
+              playerData.score.player3;
+            document.getElementById("score4").textContent =
+              playerData.score.player4;
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+
+      function updateScore(round, player, score) {
+        fetch("http://localhost:3000/api/v1/players")
+          .then((response) => response.json())
+          .then((players) => {
+            const playerData = players[players.length - 1];
+            playerData.score[player] = score;
+
+            fetch("http://localhost:3000/api/v1/players", {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(playerData),
+            })
+              .then((response) => response.json())
+              .then((updatedPlayerData) => {
+                console.log(updatedPlayerData);
+                const totalScore = calculateTotalScore(updatedPlayerData.score);
+                updateTotalScore(totalScore);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+
+      function calculateTotalScore(scores) {
+        let totalScore = 0;
+        for (const player in scores) {
+          totalScore += parseInt(scores[player]);
+        }
+        return totalScore;
+      }
+
+      function updateTotalScore(totalScore) {
+        const totalScoreElements = document.querySelectorAll(
+          "#score1, #score2, #score3, #score4"
+        );
+        totalScoreElements.forEach((element) => {
+          element.textContent = totalScore;
+        });
+      }
+
+      const addRoundButton = document.getElementById("addBtn");
+      addRoundButton.addEventListener("click", addRound);
+
+      fetchPlayerData();
+    </script>
+  </body>
+</html>

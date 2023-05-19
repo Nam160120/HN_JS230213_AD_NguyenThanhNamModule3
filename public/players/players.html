@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Players</title>
+  </head>
+  <style>
+     .container {
+    width: 300px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .inputPlayers {
+    margin-bottom: 20px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: blue;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  </style>
+  <body>
+    <div class="container">
+      <h2>Score keeper</h2>
+      <div class="inputPlayers">
+        <input id="input1" type="text" placeholder="Enter your name ..." />
+        <input id="input2" type="text" placeholder="Enter your name ..." />
+        <input id="input3" type="text" placeholder="Enter your name ..." />
+        <input id="input4" type="text" placeholder="Enter your name ..." />
+      </div>
+      <button id="createBtn">Create Game</button>
+    </div>
+    <script>
+      document
+        .getElementById("createBtn")
+        .addEventListener("click", function () {
+          var players = [];
+          var input1 = document.getElementById("input1").value;
+          var input2 = document.getElementById("input2").value;
+          var input3 = document.getElementById("input3").value;
+          var input4 = document.getElementById("input4").value;
+
+          var playerData = {
+            id: Math.floor(Math.random() * 100000000000),
+            player1: input1,
+            player2: input2,
+            player3: input3,
+            player4: input4,
+            score: {
+              player1: 0,
+              player2: 0,
+              player3: 0,
+              player4: 0,
+            },
+          };
+          players.push(playerData);
+
+          fetch("http://localhost:3000/api/v1/players", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(players),
+          })
+            .then(function (response) {
+              if (response.ok) {
+                return response.json();
+              }
+              throw new Error("Error adding players data");
+            })
+            .then(function (responseData) {
+              console.log(
+                "Data has been added to players array:",
+                responseData
+              );
+              window.location.href = `/round/${responseData[0].id}`;
+            })
+            .catch(function (error) {
+              console.error(error);
+            });
+        });
+    </script>
+  </body>
+</html>
